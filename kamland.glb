@@ -1,0 +1,58 @@
+%!GLoBES
+$version="3.0.0"
+
+
+nuflux(#ALL)< @flux_file = "Reactorflux_combined.dat"
+              @power     = 1	
+              @norm      = 7.0/6.0 >
+
+
+$profiletype = 3
+$densitytab  = {1e-3}
+$lengthtab   = {1} 
+
+
+$target_mass = 1
+
+
+$bins        = 18	
+$emin        = 0.001275
+$emax        = 0.008925
+
+$sampling_points = 288 
+$sampling_min = 0.001
+$sampling_max = 0.01
+
+$filter_state = 1 
+$filter_value = 0.425e-3 
+
+
+energy(#ERES)<
+        @type = 1
+        @sigma_function = #inverse_beta
+        @sigma_e = {0.064,0,0} >
+
+
+cross(#Reactor_CC)< @cross_file = "XCC.dat" >
+
+
+%nu_e_data = {0,156.7652499,267.4114769,292.5760472,297.3054257,216.3873188,237.6310975,245.8389359,221.3605468,233.8095146,153.5731024,99.97399211,84.13111054,57.15552292,23.7697531,12.94926282,6.078511422,1.705896572}
+
+%nu_e_bg = {0,117.7189997,132.3789758,92.90521391,68.05917575,31.88233391,6.627548887,1.676206456,1.492317065,5.673098239,3.782065492,0.654213836,11.489414,11.27458771,1.420708301,0.255498155,0,0}
+
+channel(#v_e_TO_v_e) < @channel =   #ALL:	  -:	 e:	 e:	#Reactor_CC:	 #ERES 
+                        @post_smearing_efficiencies = {0.00001,0.5,0.8,0.85,0.85,0.85,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9} >
+channel(#nuesig)   < @channel =   #ALL:	  -:	 NOSC_t:	 NOSC_t:	#Reactor_CC:     #ERES 
+                     @post_smearing_background:=%nu_e_data >
+channel(#nuebg)    < @channel =   #ALL:	  -:	 NOSC_t:	 NOSC_t:	#Reactor_CC:     #ERES 
+                     @post_smearing_background:=%nu_e_bg >
+
+
+
+rule(#RULE1)< @signal = 0.0@#v_e_TO_v_e : 1.0@#nuesig
+	      @signalerror = 0.05 : 0.02
+	      @background = 0.0@#nuebg
+	      @backgrounderror = 0.05 : 0.02
+	      @sys_on_function = "chiSpectrumCalib"  
+	      @sys_off_function = "chiNoSysSpectrum" >
+
